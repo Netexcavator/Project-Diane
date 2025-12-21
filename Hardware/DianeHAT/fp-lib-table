@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "RASPBERRY_PI_ZERO_2_W")(type "KiCad")(uri "C:/Users/7jpel/Documents/GitHub/Project-Diane/Hardware/Libraries/RASPBERRY_PI_ZERO_2_W")(options "")(descr ""))
+)
