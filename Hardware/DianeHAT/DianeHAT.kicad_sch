@@ -1798,7 +1798,7 @@
 				)
 			)
 		)
-		(property "Value" "~"
+		(property "Value" "INMP441"
 			(at 158.75 76.2 0)
 			(effects
 				(font
