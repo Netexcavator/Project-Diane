@@ -6,7 +6,6 @@ import argparse
 import pygame  # Import pygame
 import subprocess
 
-sys.path.append(os.path.abspath("../Driver"))
 from WhisPlay import WhisPlayBoard
 board = WhisPlayBoard()
 board.set_backlight(50)
