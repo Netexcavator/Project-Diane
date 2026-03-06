@@ -15,6 +15,8 @@ pygame.mixer.init()
 sound = None  # Global sound variable
 playing = False  # Global variable to track if sound is playing
 
+times_pressed = 0
+
 
 def set_wm8960_volume_stable(volume_level: str):
     """
@@ -106,24 +108,35 @@ def textdraw(string):
     
     board.draw_image(0, 0, board.LCD_WIDTH, board.LCD_HEIGHT,td)
 
+def statusbar(current, minimum, maximum):
+    im = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT), (0, 0, 0))
+
+    # get a drawing context
+    d = ImageDraw.Draw(im)
+
+    # Outside Rectangle
+    d.rectangle(([0,110],[240,130]))
+
+    # Linear Interpolation
+    progress = ((current) * (235) // (maximum - minimum))
+
+    # Internal Rectangle
+    if progress > 0:
+        d.rectangle(([5,115],[progress,125]),128)
+
+
+    td = load_jpg_as_rgb565(im, board.LCD_WIDTH, board.LCD_HEIGHT)
+    
+    board.draw_image(0, 0, board.LCD_WIDTH, board.LCD_HEIGHT,td)
 
 
 def on_button_pressed():
     print("Button pressed!")
 
+    global times_pressed
 
-    global sound, playing  # Use the global sound and playing variables
-
-    # --- MODIFICATION START: Play sound BEFORE screen changes ---
-    if sound:
-        if playing:
-            sound.stop()  # Stop the current sound if it's playing
-            print("Stopping current sound...")
-        sound.play()  # Play the sound from the beginning
-        print("Playing sound concurrently with display changes...")
-        playing = True  # Set the playing flag
-    else:
-        print("Sound not loaded.")
+    times_pressed = times_pressed + 1
+    statusbar(times_pressed, 0, 10)
 
 # Register button event
 board.on_button_press(on_button_pressed)
@@ -131,7 +144,8 @@ board.on_button_press(on_button_pressed)
 # --- Initial Image Loading ---
 # Load the image once at the beginning of the script
 try:
-    textdraw("Hello World")
+    #textdraw("Hello World")
+    statusbar(0, 0, 10)
 except Exception as e:
     print("Failed")
 
