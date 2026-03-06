@@ -1,5 +1,5 @@
 from time import sleep
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageText, ImageFont
 import sys
 import os
 import argparse
@@ -87,19 +87,24 @@ def load_jpg_as_rgb565(filepath, screen_width, screen_height):
 
     return pixel_data
 
-def textdraw():
+def textdraw(string):
+
+    font = ImageFont.truetype("Tests/fonts/FreeMono.ttf", 24)
+
+    text = ImageText.Text(string, font)
+
     # create an image
-    textimg = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT), (0, 0, 0))
+    im = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT), (0, 0, 0))
 
     # get a drawing context
-    d = ImageDraw.Draw(textimg)
+    d = ImageDraw.Draw(im)
 
     # draw multiline text
-    d.text((10,10), "Hello World", fill=(255, 255, 255))
+    d.text((10,10), text, fill=(255, 255, 255))
     
-    textdata = load_jpg_as_rgb565(textimg, board.LCD_WIDTH, board.LCD_HEIGHT)
+    td = load_jpg_as_rgb565(im, board.LCD_WIDTH, board.LCD_HEIGHT)
     
-    board.draw_image(0, 0, board.LCD_WIDTH, board.LCD_HEIGHT, textdata)
+    board.draw_image(0, 0, board.LCD_WIDTH, board.LCD_HEIGHT,td)
 
 
 
@@ -126,10 +131,23 @@ board.on_button_press(on_button_pressed)
 # --- Initial Image Loading ---
 # Load the image once at the beginning of the script
 try:
-    textdraw()
+    textdraw("Hello World")
 except Exception as e:
     print("Failed")
 
-# finally:
-#     board.cleanup()
-#     pygame.mixer.quit()  # Quit the mixer
+
+try:
+    print("Waiting for button press (Press Ctrl+C to exit)...")
+    while True:
+        # Check if the sound has finished playing and update the 'playing' flag
+        if playing and not pygame.mixer.get_busy():
+            playing = False
+            # print("Sound finished playing.") # Optional print
+        sleep(0.1)
+
+except KeyboardInterrupt:
+    print("Exiting program...")
+
+finally:
+    board.cleanup()
+    pygame.mixer.quit()  # Quit the mixer
