@@ -96,7 +96,7 @@ def textdraw(string):
     text = ImageText.Text(string, font)
 
     # create an image
-    im = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT), (0, 0, 0))
+    im = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT), "black")
 
     # get a drawing context
     d = ImageDraw.Draw(im)
@@ -109,7 +109,7 @@ def textdraw(string):
     board.draw_image(0, 0, board.LCD_WIDTH, board.LCD_HEIGHT,td)
 
 def statusbar(current, minimum, maximum):
-    im = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT), (0, 0, 0))
+    im = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT), ("black")
 
     # get a drawing context
     d = ImageDraw.Draw(im)
