@@ -129,6 +129,22 @@ def statusbar(current, minimum, maximum):
     
     board.draw_image(0, 0, board.LCD_WIDTH, board.LCD_HEIGHT,td)
 
+def recordinglist(selection):
+    image = Image.new("RGB", (240, 280), "black")
+    
+    draw = ImageDraw.Draw(image)
+
+    draw.text((210,selection*20), "*")
+
+    for i in range(13): # Placeholder for files
+        draw.text((0,20*(i+1)), "Hello World", "white")
+
+    for i in range(13):
+        draw.line([(0,20*(i+1)),(280, 20*(i+1))],"white")
+
+    data = load_jpg_as_rgb565(image, board.LCD_WIDTH, board.LCD_HEIGHT)
+
+    board.draw_image(0, 0, board.LCD_WIDTH, board.LCD_HEIGHT,data)
 
 def on_button_pressed():
     print("Button pressed!")
@@ -145,7 +161,7 @@ board.on_button_press(on_button_pressed)
 # Load the image once at the beginning of the script
 try:
     #textdraw("Hello World")
-    statusbar(0, 0, 10)
+    recordinglist(1)
 except Exception as e:
     print("Failed")
 
