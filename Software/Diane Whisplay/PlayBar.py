@@ -122,7 +122,7 @@ def statusbar(current, minimum, maximum):
 
     # Internal Rectangle
     if progress > 0:
-        d.rectangle(([5,115],[progress,125]),128)
+        d.rectangle(([5,115],[progress,125]),"red")
 
 
     td = load_jpg_as_rgb565(im, board.LCD_WIDTH, board.LCD_HEIGHT)
