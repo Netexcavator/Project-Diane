@@ -102,14 +102,14 @@ def textdraw(string):
     d = ImageDraw.Draw(im)
 
     # draw multiline text
-    d.text((10,10), text, fill=(255, 255, 255))
+    d.text((10,10), text, fill="white")
     
     td = load_jpg_as_rgb565(im, board.LCD_WIDTH, board.LCD_HEIGHT)
     
     board.draw_image(0, 0, board.LCD_WIDTH, board.LCD_HEIGHT,td)
 
 def statusbar(current, minimum, maximum):
-    im = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT), ("black")
+    im = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT),"black")
 
     # get a drawing context
     d = ImageDraw.Draw(im)
