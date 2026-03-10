@@ -5,6 +5,7 @@ import os
 import argparse
 import pygame  # Import pygame
 import subprocess
+from mutagen.mp3 import MP3
 
 from WhisPlay import WhisPlayBoard
 board = WhisPlayBoard()
@@ -122,7 +123,7 @@ def statusbar(current, minimum, maximum):
 
     # Internal Rectangle
     if progress > 0:
-        d.rectangle(([5,115],[progress,125]),"red")
+        d.rectangle(([5,115],[progress+5,125]),"red")
 
 
     td = load_jpg_as_rgb565(im, board.LCD_WIDTH, board.LCD_HEIGHT)
@@ -149,30 +150,57 @@ def recordinglist(selection):
 def on_button_pressed():
     print("Button pressed!")
 
-    global times_pressed
+    global playing  # Use the global sound and playing variables
 
-    times_pressed = times_pressed + 1
-    statusbar(times_pressed, 0, 10)
+    # --- MODIFICATION START: Play sound BEFORE screen changes ---
+    if not pygame.mixer.music.get_busy():
+        if playing:
+            pygame.mixer.music.stop()  # Stop the current sound if it's playing
+            print("Stopping current sound...")
+        pygame.mixer.music.play()  # Play the sound from the beginning
+        print("Playing sound concurrently with display changes...")
+        playing = True  # Set the playing flag
+    else:
+        print("Sound not loaded.")
 
 # Register button event
 board.on_button_press(on_button_pressed)
+parser = argparse.ArgumentParser(
+    description="Play sound on button press.")
+parser.add_argument("--sound", default="data/test.mp3",
+                    # Add sound argument
+                    help="Path to the sound file (default: data/test.mp3)")
+args = parser.parse_args()
+
+sound_filepath = args.sound  # Get sound filepath
+song = MP3(args.sound)
+songLength = song.info.length
 
 # --- Initial Image Loading ---
 # Load the image once at the beginning of the script
 try:
     #textdraw("Hello World")
-    recordinglist(1)
+    statusbar(0, 0, 10)
 except Exception as e:
     print("Failed")
 
+try:
+    pygame.mixer.music.load(sound_filepath)
+    print(f"Sound {os.path.basename(sound_filepath)} loaded successfully.")
+    set_wm8960_volume_stable("121")  # Set volume to 121（74）
+except Exception as e:
+    print(f"Failed to load sound from {sound_filepath}: {e}")
+    sound = None
 
 try:
     print("Waiting for button press (Press Ctrl+C to exit)...")
     while True:
         # Check if the sound has finished playing and update the 'playing' flag
-        if playing and not pygame.mixer.get_busy():
+        if playing and pygame.mixer.music.get_busy():
+            currentTime = pygame.mixer.music.get_pos()/1000
+            statusbar(currentTime, 0, songLength)
+        if playing and not pygame.mixer.music.get_busy():
             playing = False
-            # print("Sound finished playing.") # Optional print
         sleep(0.1)
 
 except KeyboardInterrupt:
