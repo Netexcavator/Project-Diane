@@ -1,12 +1,15 @@
-from time import sleep
-from PIL import Image
-import sys
-import os
 import argparse
-import pygame  # Import pygame
+import os
 import subprocess
+import sys
+from time import sleep
+
+import pygame  # Import pygame
+from faster_whisper import WhisperModel
+from PIL import Image, ImageDraw, ImageFont, ImageText
 
 from WhisPlay import WhisPlayBoard
+
 board = WhisPlayBoard()
 board.set_backlight(50)
 
@@ -17,6 +20,12 @@ image_filepath = None
 pygame.mixer.init()
 sound = None  # Global sound variable
 playing = False  # Global variable to track if sound is playing
+recording = False
+poll = None
+
+# Initializing Speech to Text
+model_size = "tiny.en"
+model = WhisperModel(model_size, device="cpu", compute_type="int8")
 
 
 def set_wm8960_volume_stable(volume_level: str):
@@ -27,23 +36,18 @@ def set_wm8960_volume_stable(volume_level: str):
         volume_level (str): The desired volume value, e.g., '90%' or '121'.
     """
 
-    CARD_NAME = 'wm8960soundcard'
-    CONTROL_NAME = 'Speaker'
-    DEVICE_ARG = f'hw:{CARD_NAME}'
+    CARD_NAME = "wm8960soundcard"
+    CONTROL_NAME = "Speaker"
+    DEVICE_ARG = f"hw:{CARD_NAME}"
 
-    command = [
-        'amixer',
-        '-D', DEVICE_ARG,
-        'sset',
-        CONTROL_NAME,
-        volume_level
-    ]
+    command = ["amixer", "-D", DEVICE_ARG, "sset", CONTROL_NAME, volume_level]
 
     try:
         subprocess.run(command, check=True, capture_output=True, text=True)
 
         print(
-            f"INFO: Successfully set '{CONTROL_NAME}' volume to {volume_level} on card '{CARD_NAME}'.")
+            f"INFO: Successfully set '{CONTROL_NAME}' volume to {volume_level} on card '{CARD_NAME}'."
+        )
 
     except subprocess.CalledProcessError as e:
         print(f"ERROR: Failed to execute amixer.", file=sys.stderr)
@@ -51,11 +55,14 @@ def set_wm8960_volume_stable(volume_level: str):
         print(f"Return Code: {e.returncode}", file=sys.stderr)
         print(f"Error Output:\n{e.stderr}", file=sys.stderr)
     except FileNotFoundError:
-        print("ERROR: 'amixer' command not found. Ensure it is installed and in PATH.", file=sys.stderr)
+        print(
+            "ERROR: 'amixer' command not found. Ensure it is installed and in PATH.",
+            file=sys.stderr,
+        )
 
 
-def load_jpg_as_rgb565(filepath, screen_width, screen_height):
-    img = Image.open(filepath).convert('RGB')
+def load_jpg_as_rgb565(img, screen_width, screen_height):
+    # img = Image.open(filepath).convert('RGB')
     original_width, original_height = img.size
 
     aspect_ratio = original_width / original_height
@@ -70,7 +77,8 @@ def load_jpg_as_rgb565(filepath, screen_width, screen_height):
         offset_x = (new_width - screen_width) // 2
         # Crop the image to fit screen width
         cropped_img = resized_img.crop(
-            (offset_x, 0, offset_x + screen_width, screen_height))
+            (offset_x, 0, offset_x + screen_width, screen_height)
+        )
     else:
         # Original image is taller or has the same aspect ratio, scale based on screen width
         new_width = screen_width
@@ -80,7 +88,8 @@ def load_jpg_as_rgb565(filepath, screen_width, screen_height):
         offset_y = (new_height - screen_height) // 2
         # Crop the image to fit screen height
         cropped_img = resized_img.crop(
-            (0, offset_y, screen_width, offset_y + screen_height))
+            (0, offset_y, screen_width, offset_y + screen_height)
+        )
 
     pixel_data = []
     for y in range(screen_height):
@@ -91,8 +100,68 @@ def load_jpg_as_rgb565(filepath, screen_width, screen_height):
 
     return pixel_data
 
+
+def textDraw(string):
+
+    font = ImageFont.truetype("Tests/fonts/FreeMono.ttf", 24)
+
+    text = ImageText.Text(string, font)
+
+    # create an image
+    im = Image.new("RGB", (board.LCD_WIDTH, board.LCD_HEIGHT), "black")
+
+    # get a drawing context
+    d = ImageDraw.Draw(im)
+
+    # draw multiline text
+    d.text((10, 10), text, fill="white")
+
+    td = load_jpg_as_rgb565(im, board.LCD_WIDTH, board.LCD_HEIGHT)
+
+    board.draw_image(0, 0, board.LCD_WIDTH, board.LCD_HEIGHT, td)
+
+
+def speech2text():
+    segments, info = model.transcribe("foobar.mp3", beam_size=5)
+
+    print(
+        "Detected language '%s' with probability %f"
+        % (info.language, info.language_probability)
+    )
+    segments = list(segments)  # The transcription will actually run here.
+
+    for segment in segments:
+        print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+
+
 # Button callback function
-
-
 def on_button_pressed():
     print("Button pressed!")
+    print("Recording for 15 seconds")
+    global recording, p
+    recording = True
+    p = subprocess.Popen(["arecord", "-d", "15", "main.mp3"], shell=False)
+
+
+# Register button event
+board.on_button_press(on_button_pressed)
+
+try:
+    print("Waiting for button press (Press Ctrl+C to exit)...")
+    while True:
+        if recording is True and poll is None:
+            textDraw("Recording ...")
+            poll = p.poll()
+            if poll is not None:
+                speech2text()
+        else:
+            recording = False
+            board.fill_screen(0x00)
+        sleep(0.1)
+
+except KeyboardInterrupt:
+    print("Exiting program...")
+
+finally:
+    board.cleanup()
+    pygame.mixer.quit()  # Quit the mixer
