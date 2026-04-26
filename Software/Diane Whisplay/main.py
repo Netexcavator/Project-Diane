@@ -4,6 +4,7 @@ import subprocess
 import sys
 from time import sleep
 
+import markdown
 import pygame  # Import pygame
 from faster_whisper import WhisperModel
 from PIL import Image, ImageDraw, ImageFont, ImageText
@@ -122,7 +123,8 @@ def textDraw(string):
 
 
 def speech2text():
-    segments, info = model.transcribe("foobar.mp3", beam_size=5)
+    fulltext = ""
+    segments, info = model.transcribe("main.mp3", beam_size=5)
 
     print(
         "Detected language '%s' with probability %f"
@@ -131,7 +133,15 @@ def speech2text():
     segments = list(segments)  # The transcription will actually run here.
 
     for segment in segments:
-        print("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+        print("%s", segment.text)
+        fulltext += segment.text
+
+    html = markdown.markdown(fulltext)
+
+    with open(
+        "Speech.html", "w", encoding="utf-8", errors="xmlcharrefreplace"
+    ) as output_file:
+        output_file.write(html)
 
 
 # Button callback function
@@ -141,7 +151,6 @@ def on_button_pressed():
     global recording, p
     recording = True
     p = subprocess.Popen(["arecord", "-d", "15", "main.mp3"], shell=False)
-
 
 # Register button event
 board.on_button_press(on_button_pressed)
