@@ -1,5 +1,3 @@
-import argparse
-import os
 import subprocess
 import sys
 from time import sleep
@@ -151,6 +149,7 @@ def on_button_pressed():
     global recording, p
     recording = True
     p = subprocess.Popen(["arecord", "-d", "15", "main.mp3"], shell=False)
+
 
 # Register button event
 board.on_button_press(on_button_pressed)
