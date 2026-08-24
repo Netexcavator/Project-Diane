@@ -12,8 +12,6 @@ from WhisPlay import WhisPlayBoard
 board = WhisPlayBoard()
 board.set_backlight(50)
 
-global_image_data = None
-image_filepath = None
 
 # Initialize pygame mixer
 pygame.mixer.init()
